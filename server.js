@@ -5,9 +5,21 @@ const admin = require('firebase-admin');
 process.on('unhandledRejection', e => console.error('unhandledRejection:', (e && e.message) || e));
 process.on('uncaughtException', e => console.error('uncaughtException:', (e && e.message) || e));
 
+// چابی پڑھنا: نام، لمبائی اور پہلا/آخری حرف لاگ میں لکھتا ہے (متن نہیں لکھتا)
+function loadSA() {
+  let raw = (process.env.FIREBASE_SERVICE_ACCOUNT || '').trim();
+  console.log('env check: names=[' + Object.keys(process.env).filter(k => /FIRE|SERVICE/i.test(k)).join(',') +
+    '] len=' + raw.length + ' first=' + (raw[0] || 'none') + ' last=' + (raw[raw.length - 1] || 'none'));
+  if (!raw) throw new Error('variable maujood nahi ya khali hai');
+  if ((raw[0] === '"' && raw.slice(-1) === '"') || (raw[0] === "'" && raw.slice(-1) === "'")) raw = raw.slice(1, -1);
+  if (raw[0] !== '{' && raw.includes('"type"')) raw = '{' + raw;      // شروع کا بریکٹ کٹ گیا ہو تو جوڑ دے
+  if (raw.slice(-1) !== '}' && raw.includes('"type"')) raw = raw + '}'; // آخر کا بریکٹ کٹ گیا ہو تو جوڑ دے
+  return JSON.parse(raw);
+}
+
 let sa;
 try {
-  sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  sa = loadSA();
 } catch (e) {
   console.error('FIREBASE_SERVICE_ACCOUNT parse error:', e.message);
   process.exit(1);
